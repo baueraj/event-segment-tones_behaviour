@@ -29,7 +29,8 @@ vid_selector = {1: 'c1_1',
 #vid_select_mod6eq0 = 'c2_3'
 
 # pilot 2 (start: 10/17/17) ===================================================
-dPath_plt2_c1_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid1_raw_17_10_20.csv']]
+#dPath_plt2_c1_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid1_raw_17_10_20.csv']]
+dPath_plt2_c1_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid1_raw_17_10_26.csv']]
 dPaths_plt2 = [dPath_plt2_c1_clip1]
 
 designPath_plt2 = '../designMaterials/plt2/videos_toneOnsetsNIDs.csv'

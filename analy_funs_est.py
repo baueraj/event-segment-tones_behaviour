@@ -20,6 +20,209 @@ def get_participant_data_plt2(paths, cartoonNames, propTrialsThresh):
     -----
     NA
     '''
+
+    import pdb
+    import numpy as np
+    import pandas as pd
+    
+    dPaths = paths[0]
+    dfDesign = pd.read_csv(paths[1])
+
+    columns_to_retain = ['subject', 'trialcode', 'trialnum', 'values.key_pressed', 
+                         'values.timeOfResponse', 'block.video_play.timestamp', 
+                         'trial.Response.timestamp', 'video.video_in.timestamp']
+    
+    dfs_byC = []
+    
+    for i_c, dPathsAll_c in enumerate(dPaths):
+        
+        inds_c = [i_c*2, i_c*2 + 1]
+        dfDesign_c = dfDesign.iloc[:, inds_c].copy() \
+                                  .dropna(axis=0, how='any')
+
+        for j_c, dPath_c in enumerate(dPathsAll_c):
+            
+            df_all = pd.read_csv(dPath_c)[columns_to_retain]
+            df = df_all[(df_all['trialcode'] == 'write_videodata_trial')].copy()
+
+            dfs_bySubj_pre = [df[(df['subject'] == i)].reset_index() for i in df['subject'].unique() \
+                              if len(df[(df['subject'] == i)]) / len(dfDesign_c) >= propTrialsThresh]
+
+            dfs_bySubj = [pd.concat([df_i, pd.DataFrame({'elapTime': df_i['values.timeOfResponse'] - (df_i.loc[0,'video.video_in.timestamp'] - \
+                                                        df_i.loc[0,'block.video_play.timestamp'])})], axis=1) for df_i in dfs_bySubj_pre]
+            
+            if j_c == 0:
+                dfs_bySubjAll = dfs_bySubj
+            else:
+                dfs_bySubjAll.extend(dfs_bySubj)
+                
+        dfs_byC.append(dfs_bySubjAll)
+            
+    #pdb.set_trace()
+    
+    return dfs_byC
+
+
+
+def prep_subj_data_plt2(dfs_dat_byC, paths):
+    '''
+    reformat participant data
+
+    Parameters
+    ----------
+    dfs_dat_byC : list
+        contains lists by cartoon clip of each subj data df
+    paths : list
+        string paths to files, folders
+    
+    Returns
+    -------
+    dfs_analy_byC : dict
+        contains lists by cartoon clip of RT and acc dfs
+
+    Notes
+    -----
+    Assumes for now low tone (0) correct response is '36', high (1) is '37'
+    Hard-coded lowerbound for acceptable RT (100ms)
+    '''    
+    import pdb
+    import numpy as np
+    import pandas as pd
+    
+    dfDesign = pd.read_csv(paths[1])
+    
+    dfs_RT_byC = []
+    dfs_corrResp_byC = []
+    
+    wrngVal = 0
+    
+    for i_c, dfs_c in enumerate(dfs_dat_byC):
+        
+        inds_c = [i_c*2, i_c*2 + 1]
+        dfDesign_c = dfDesign.iloc[:, inds_c].copy() \
+                                  .dropna(axis=0, how='any')
+        
+        df_RT_c = pd.DataFrame()
+        df_corrResp_c = pd.DataFrame()
+        
+        for i in range(len(dfDesign_c)):
+            
+            if dfDesign_c.iloc[i, 0] == 0:
+                corrKey = 36 #low tone
+            else:
+                corrKey = 37 #high tone
+            toneOnset = dfDesign_c.iloc[i, 1]
+            
+            subjs_i = []
+            RT_i = []
+            corrResp_i = []   
+            
+            for df_subj in dfs_c:
+            
+                subjs_i.append(df_subj.loc[0, 'subject'])
+                trialInd = np.argmin(df_subj['elapTime'].where(df_subj['elapTime'] > toneOnset))
+                corrResp_i.append(1 if df_subj.loc[trialInd, 'values.key_pressed'] == corrKey else wrngVal)                
+                RT_i.append(df_subj.loc[trialInd, 'elapTime'] - toneOnset)
+
+                if corrResp_i[-1] == wrngVal:
+                    RT_i[-1] = np.nan
+                        
+                if RT_i[-1] <= 100:
+                    corrResp_i[-1] = wrngVal
+                    RT_i[-1] = np.nan
+                        
+                if i != len(dfDesign)-1:   
+                    if df_subj.loc[trialInd, 'elapTime'] > dfDesign_c.iloc[i+1, 1]:
+                        corrResp_i[-1] = wrngVal
+                        RT_i[-1] = np.nan
+              
+            df_RT_c = df_RT_c.append(dict(zip(subjs_i, RT_i)), ignore_index=True)
+            df_corrResp_c = df_corrResp_c.append(dict(zip(subjs_i, corrResp_i)), ignore_index=True)
+            
+        dfs_RT_byC.append(df_RT_c)
+        dfs_corrResp_byC.append(df_corrResp_c)
+        
+    dfs_analy_byC = {'RT': dfs_RT_byC,
+                     'acc': dfs_corrResp_byC}
+                
+    return dfs_analy_byC
+
+
+
+def dualplot_tonesWevents(s1, s2RT, s2acc, ylims):
+    """
+    plots tone data with event boundaries from original event seg data
+
+    Parameters
+    ----------
+    s1 : pandas series/df (1 col)
+        pre-smoothed event boundary data to be plotted
+    s2RT : pandas df
+        tones data (RT) with tone 'onset' column
+    s2acc : pandas df
+        tones data (acc) with tone 'onset' column
+    ylims : dict
+        ylims for plotting (each is a list)
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    NA
+    """
+
+    import os, sys, pdb
+    import numpy as np
+    import pandas as pd 
+    import matplotlib.pyplot as plt
+    sys.path.append('/Users/bauera/Dropbox/UofT/experiments/event-segmentation/analysis')
+    import init_es
+    plt.show()
+    
+    # using 20 seconds as a non-parameterized (in function) default increment for x-ticks
+    stepSize = 20
+
+    fig, ax = plt.subplots()
+    ax2 = ax.twinx()
+
+    s1.plot.area(ax=ax, color='b', alpha=1)
+    s2RT.plot.line(x='onset', y='RT', ax=ax2, linewidth=3, style='r-o', secondary_y=True)
+    
+    rng = np.arange(0, max(s1.index) + stepSize, stepSize)
+    ax.set_xticks(rng)
+    ax.set_xticklabels(init_es.reformat_timestamp(rng).values, rotation=-45)
+    
+    ax.set_ylim(ylims['s1'])
+    ax2.right_ax.set_ylim(ylims['s2RT'])
+
+
+
+# OLD
+"""
+def get_participant_data_plt2(paths, cartoonNames, propTrialsThresh):
+    '''
+    read participant data stored as single csv file
+
+    Parameters
+    ----------
+    paths : list
+        string paths to files, folders
+    cartoonNames : list
+        strings of cartoon names
+    propTrialsThresh : float
+        specifies proportion of trials that must have a response to include subj data 
+        
+    Returns
+    -------
+    dfs_byC : list
+        contains lists by cartoon clip of each subj data df
+
+    Notes
+    -----
+    NA
+    '''
     
     import pdb
     import numpy as np
@@ -59,10 +262,13 @@ def get_participant_data_plt2(paths, cartoonNames, propTrialsThresh):
     #pdb.set_trace()
     
     return dfs_byC
+"""
 
 
 
-def prep_subj_data(dfs_dat_byC, designPath):
+# OLD
+"""
+def prep_subj_data_plt2(dfs_dat_byC, designPath):
     '''
     reformat participant data
 
@@ -144,9 +350,10 @@ def prep_subj_data(dfs_dat_byC, designPath):
                      'acc': dfs_corrResp_byC}
                 
     return dfs_analy_byC
+"""
 
 
-
+# OLD
 """
 def get_participant_data_plt1(vid_selector, paths):
     '''
