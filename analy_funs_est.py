@@ -83,7 +83,6 @@ def prep_subj_data_plt2(dfs_dat_byC, paths):
     Notes
     -----
     Assumes for now low tone (0) correct response is '36', high (1) is '37'
-    Hard-coded lowerbound for acceptable RT (100ms)
     '''    
     import pdb
     import numpy as np
@@ -127,10 +126,6 @@ def prep_subj_data_plt2(dfs_dat_byC, paths):
                 if corrResp_i[-1] == wrngVal:
                     RT_i[-1] = np.nan
                         
-                if RT_i[-1] <= 100:
-                    corrResp_i[-1] = wrngVal
-                    RT_i[-1] = np.nan
-                        
                 if i != len(dfDesign)-1:   
                     if df_subj.loc[trialInd, 'elapTime'] > dfDesign_c.iloc[i+1, 1]:
                         corrResp_i[-1] = wrngVal
@@ -170,7 +165,7 @@ def dualplot_tonesWevents(s1, s2RT, s2acc, ylims):
 
     Notes
     -----
-    NA
+    Not currently plotting accuracy data
     """
 
     import os, sys, pdb
