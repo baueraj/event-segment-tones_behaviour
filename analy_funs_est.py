@@ -134,8 +134,6 @@ def prep_subj_data(dfs_dat_byC, paths):
               
             df_RT_c = df_RT_c.append(dict(zip(subjs_i, RT_i)), ignore_index=True)
             df_corrResp_c = df_corrResp_c.append(dict(zip(subjs_i, corrResp_i)), ignore_index=True)
-            
-        pdb.set_trace()
         
         # to detrend, I need to ignore nan values [can't just use df_RT_c.transform(lambda x: signal.detrend(x))]
         for col_i in list(df_RT_c.columns):
