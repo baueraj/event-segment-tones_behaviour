@@ -151,7 +151,7 @@ def dualplot_tonesWevents(s1, s2RT, s2acc, ylims):
     Parameters
     ----------
     s1 : pandas series/df (1 col)
-        pre-smoothed event boundary data to be plotted
+        moothed event boundary data to be plotted
     s2RT : pandas df
         tones data (RT) with tone 'onset' column
     s2acc : pandas df
@@ -191,6 +191,47 @@ def dualplot_tonesWevents(s1, s2RT, s2acc, ylims):
     
     ax.set_ylim(ylims['s1'])
     ax2.right_ax.set_ylim(ylims['s2RT'])
+
+
+# STOPPED
+"""
+def get_n_peak_bounds(stup_es):
+    '''
+    returns and plots n peak event boundaries (Zacks definition) for rugrats and busyTown
+
+    Parameters
+    ----------
+    xxx
+    
+    Returns
+    -------
+    xxx : list
+        timestamps of the n peak event boundaries (at their peaks)
+
+    Notes
+    -----
+    NA
+    '''
+
+    import os, sys, pdb
+    import numpy as np
+    import pandas as pd 
+    import matplotlib.pyplot as plt
+    sys.path.append('/Users/bauera/Dropbox/UofT/experiments/event-segmentation/analysis')
+    import init_es
+    plt.show()
+    
+    countsEvtB = [i.sum(axis = 0) for i in init_es.allDat['aEventBounds']]
+    meanCtEvtB_c1 = aCountEvtB[stup['c_inds'][0]].mean()
+    meanCtEvtB_c2 = aCountEvtB[stup['c_inds'][1]].mean()
+    
+    aSmthSumEvtB = []
+    for i in stup['c_inds']:
+        allEvtB = init_es.plot_mov_avg_events(init_es.allDat['aEventBounds'][i].sum(axis=1),
+                                              stup['smooth_win'], 'b', 1, 0, 1).fillna(value=0)
+    
+    return
+"""
 
 
 
