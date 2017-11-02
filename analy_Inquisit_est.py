@@ -1,3 +1,4 @@
+import init_est, analy_funs_est # so I can importlib.reload()
 from init_est import *
 from analy_funs_est import *
 sys.path.append('/Users/bauera/Dropbox/UofT/experiments/event-segmentation/analysis')
@@ -11,8 +12,8 @@ stup = {'smooth_win': 2,
         'c_inds': [1, 2]}
 
 # pilot 2
-allDat_plt2_pre = get_participant_data_plt2(paths_plt2, cartoonNames, propTrialsThresh)
-allDat_plt2 = prep_subj_data_plt2(allDat_plt2_pre, paths_plt2)
+allDat_plt2_pre = get_participant_data(paths_plt2, cartoonNames, propTrialsThresh)
+allDat_plt2 = prep_subj_data(allDat_plt2_pre, paths_plt2)
 
 
 

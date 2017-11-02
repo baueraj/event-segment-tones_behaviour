@@ -1,4 +1,4 @@
-def get_participant_data_plt2(paths, cartoonNames, propTrialsThresh):
+def get_participant_data(paths, cartoonNames, propTrialsThresh):
     '''
     read participant data stored as single csv file
 
@@ -64,9 +64,9 @@ def get_participant_data_plt2(paths, cartoonNames, propTrialsThresh):
 
 
 
-def prep_subj_data_plt2(dfs_dat_byC, paths):
+def prep_subj_data(dfs_dat_byC, paths):
     '''
-    reformat participant data
+    detrend and reformat participant data
 
     Parameters
     ----------
@@ -87,6 +87,7 @@ def prep_subj_data_plt2(dfs_dat_byC, paths):
     import pdb
     import numpy as np
     import pandas as pd
+    from scipy import signal
     
     dfDesign = pd.read_csv(paths[1])
     
@@ -119,7 +120,7 @@ def prep_subj_data_plt2(dfs_dat_byC, paths):
             for df_subj in dfs_c:
             
                 subjs_i.append(df_subj.loc[0, 'subject'])
-                trialInd = np.argmin(df_subj['elapTime'].where(df_subj['elapTime'] > toneOnset))
+                trialInd = pd.Series.idxmin(df_subj['elapTime'].where(df_subj['elapTime'] > toneOnset))
                 corrResp_i.append(1 if df_subj.loc[trialInd, 'values.key_pressed'] == corrKey else wrngVal)                
                 RT_i.append(df_subj.loc[trialInd, 'elapTime'] - toneOnset)
 
@@ -133,6 +134,14 @@ def prep_subj_data_plt2(dfs_dat_byC, paths):
               
             df_RT_c = df_RT_c.append(dict(zip(subjs_i, RT_i)), ignore_index=True)
             df_corrResp_c = df_corrResp_c.append(dict(zip(subjs_i, corrResp_i)), ignore_index=True)
+            
+        pdb.set_trace()
+        
+        # to detrend, I need to ignore nan values [can't just use df_RT_c.transform(lambda x: signal.detrend(x))]
+        for col_i in list(df_RT_c.columns):
+            col_pre = df_RT_c[col_i][df_RT_c[col_i].notnull()].copy()
+            col_detrend = signal.detrend(col_pre)
+            df_RT_c.loc[col_pre.index, col_i] = col_detrend
             
         dfs_RT_byC.append(df_RT_c)
         dfs_corrResp_byC.append(df_corrResp_c)

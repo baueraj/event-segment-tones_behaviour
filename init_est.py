@@ -37,4 +37,4 @@ designPath_plt2 = '../designMaterials/plt2/videos_toneOnsetsNIDs.csv'
 
 paths_plt2 = [dPaths_plt2, designPath_plt2]
 
-propTrialsThresh = 0.9
+propTrialsThresh = 0.95
