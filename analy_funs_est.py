@@ -64,7 +64,7 @@ def get_participant_data(paths, cartoonNames, propTrialsThresh):
 
 
 
-def prep_subj_data(dfs_dat_byC, paths):
+def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
     '''
     detrend and reformat participant data
 
@@ -72,6 +72,8 @@ def prep_subj_data(dfs_dat_byC, paths):
     ----------
     dfs_dat_byC : list
         contains lists by cartoon clip of each subj data df
+    cs_withDat : list
+        specifies indices of cartoon clips that have data to prep (inds based on design file)
     paths : list
         string paths to files, folders
     
@@ -83,7 +85,8 @@ def prep_subj_data(dfs_dat_byC, paths):
     Notes
     -----
     Assumes for now low tone (0) correct response is '36', high (1) is '37'
-    '''    
+    '''
+
     import pdb
     import numpy as np
     import pandas as pd
@@ -96,12 +99,13 @@ def prep_subj_data(dfs_dat_byC, paths):
     
     wrngVal = 0
     
-    for i_c, dfs_c in enumerate(dfs_dat_byC):
+    for iDat_c, dfs_c in enumerate(dfs_dat_byC):
+        i_c = cs_withDat[iDat_c]
         
         inds_c = [i_c*2, i_c*2 + 1]
         dfDesign_c = dfDesign.iloc[:, inds_c].copy() \
                                   .dropna(axis=0, how='any')
-        
+
         df_RT_c = pd.DataFrame()
         df_corrResp_c = pd.DataFrame()
         
@@ -115,7 +119,7 @@ def prep_subj_data(dfs_dat_byC, paths):
             
             subjs_i = []
             RT_i = []
-            corrResp_i = []   
+            corrResp_i = []
             
             for df_subj in dfs_c:
             
@@ -127,7 +131,8 @@ def prep_subj_data(dfs_dat_byC, paths):
                 if corrResp_i[-1] == wrngVal:
                     RT_i[-1] = np.nan
                         
-                if i != len(dfDesign)-1:   
+                if i != len(dfDesign_c)-1:
+                    #pdb.set_trace()
                     if df_subj.loc[trialInd, 'elapTime'] > dfDesign_c.iloc[i+1, 1]:
                         corrResp_i[-1] = wrngVal
                         RT_i[-1] = np.nan
@@ -151,8 +156,85 @@ def prep_subj_data(dfs_dat_byC, paths):
 
 
 
+def prep_tone_timestamps(paths):
+    '''
+    prepare each cartoon clip's tones for LMER (distance from event boundary, etc.)
+
+    Parameters
+    ----------
+    paths : list
+        contains paths to design materials
+    
+    Returns
+    -------
+    dfs_tones : list
+        contains df per cartoon clip of vars of interest for LMER
+
+    Notes
+    -----
+    NA
+    '''
+    
+    import pdb
+    import numpy as np
+    import pandas as pd
+    
+    stup = {'peak_win': 3,
+            'after_peak_rng': [3, 6],
+            'exclude_dist': 25}
+    
+    dfDesign = pd.read_csv(paths[1])
+    dfDesign_peaks = pd.read_csv(paths[2])
+    
+    dfs_tones = []
+    
+    for i_c in range(int(len(dfDesign.columns)/2)):        
+        ind_c = i_c*2 + 1
+        
+        dfDesign_c = dfDesign.iloc[:, ind_c].copy() \
+                                  .dropna(axis=0, how='any')
+ 
+        dfDes_peaks_c = dfDesign_peaks.iloc[:, int(np.floor(i_c/(len(dfDesign.columns)/2)))].copy() \
+                                  .dropna(axis=0, how='any')
+        
+        dist_c = []
+        peak_c = []
+        after_peak_c = []
+        before_frst_bound_c = []
+        
+        for j, tone_j in enumerate(dfDesign_c): #it's a series -- need to specify name?
+            past_peak_ind = pd.Series.idxmax(dfDes_peaks_c.where(dfDes_peaks_c < tone_j/1000))
+            future_peak_ind = pd.Series.idxmin(dfDes_peaks_c.where(dfDes_peaks_c > tone_j/1000))
+            
+            dist_c.append(tone_j/1000 - dfDes_peaks_c.loc[past_peak_ind]) # NOTE: loc, not iloc -- pd.Series.idxmax returns index
+            if dist_c[-1] > stup['exclude_dist']: dist_c[-1] = np.nan
+                     
+            if (tone_j/1000 - dfDes_peaks_c.loc[past_peak_ind] <= stup['peak_win'] or \
+                                          dfDes_peaks_c.loc[future_peak_ind] - tone_j/1000 <= stup['peak_win']) and \
+                                          dfDes_peaks_c.loc[past_peak_ind] != 0:
+                peak_c.append(1)
+            else:
+                peak_c.append(0)
+                
+            if tone_j/1000 - dfDes_peaks_c.loc[past_peak_ind] >= stup['after_peak_rng'][0] and \
+                                          tone_j/1000 - dfDes_peaks_c.loc[past_peak_ind] <= stup['after_peak_rng'][1] and \
+                                          dfDes_peaks_c.loc[past_peak_ind] != 0:
+                after_peak_c.append(1)
+            else:
+                after_peak_c.append(0)   
+                  
+            before_frst_bound_c.append(1 if dfDes_peaks_c.loc[past_peak_ind]==0 else 0)
+        
+        dfTones_c = pd.DataFrame({'dist': dist_c, 'peak': peak_c, 'afterPeak': after_peak_c, 'b41stBound': before_frst_bound_c})
+        dfTones_c.loc[dfTones_c.isnull().any(axis=1), :] = np.nan
+        dfs_tones.append(dfTones_c)
+        
+    return dfs_tones
+
+
+
 def dualplot_tonesWevents(s1, s2RT, s2acc, ylims):
-    """
+    '''
     plots tone data with event boundaries from original event seg data
 
     Parameters
@@ -173,7 +255,7 @@ def dualplot_tonesWevents(s1, s2RT, s2acc, ylims):
     Notes
     -----
     Not currently plotting accuracy data
-    """
+    '''
 
     import os, sys, pdb
     import numpy as np

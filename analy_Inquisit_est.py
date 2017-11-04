@@ -13,7 +13,7 @@ stup = {'smooth_win': 2,
 
 # pilot 2
 allDat_plt2_pre = get_participant_data(paths_plt2, cartoonNames, propTrialsThresh)
-allDat_plt2 = prep_subj_data(allDat_plt2_pre, paths_plt2)
+allDat_plt2 = prep_subj_data(allDat_plt2_pre, cs_withDat_plt2, paths_plt2)
 
 
 
