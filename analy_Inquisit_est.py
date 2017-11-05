@@ -14,12 +14,12 @@ stup = {'smooth_win': 2,
 # pilot 2
 allDat_plt2_pre = get_participant_data(paths_plt2, cartoonNames, propTrialsThresh)
 allDat_plt2 = prep_subj_data(allDat_plt2_pre, cs_withDat_plt2, paths_plt2)
+#==============================================================================
 
 
 
 #==============================================================================
 # plot tone data on top of adults' event boundaries (just rugrats clip 1)
-
 dfDesign = pd.read_csv(paths_plt2[1])
 i_c = 0
 inds_c = [i_c*2, i_c*2 + 1]
@@ -55,7 +55,6 @@ dualplot_tonesWevents(evntBound, meanRT, meanAcc, ylims)
 
 #==============================================================================
 # get n most probable event boundaries (Zacks definition)
-
 countsEvtB = [i.sum(axis = 0) for i in init_es.allDat['aEventBounds']]
 meanCtEvtB_c1 = aCountEvtB[stup['c_inds'][0]].mean()
 meanCtEvtB_c2 = aCountEvtB[stup['c_inds'][1]].mean()

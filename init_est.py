@@ -31,14 +31,21 @@ vid_selector = {1: 'c1_1',
 # pilot 2 (start: 10/17/17) ===================================================
 #dPath_plt2_c1_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid1_raw_17_10_20.csv']]
 dPath_plt2_c1_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid1_raw_17_10_26.csv']]
-dPath_plt2_c1_clip2 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid3_raw_17_11_03.csv']]
+dPath_plt2_c1_clip2 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid3_raw_17_11_05.csv']]
 dPath_plt2_c1_clip3 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid5_raw_17_11_03.csv']]
-dPaths_plt2 = [dPath_plt2_c1_clip1, dPath_plt2_c1_clip2, dPath_plt2_c1_clip3]
-cs_withDat_plt2 = [0, 2, 4] # cartoon clips with data
+
+# dummies for now
+dPath_plt2_c2_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid1_raw_17_10_26.csv']]
+dPath_plt2_c2_clip2 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid3_raw_17_11_05.csv']]
+dPath_plt2_c2_clip3 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid5_raw_17_11_03.csv']]
+
+dPaths_plt2 = [dPath_plt2_c1_clip1, dPath_plt2_c2_clip1, 
+               dPath_plt2_c1_clip2, dPath_plt2_c2_clip2, 
+               dPath_plt2_c1_clip3, dPath_plt2_c2_clip3]
+cs_withDat_plt2 = [0, 1, 2, 3, 4, 5] # cartoon clips with data
 
 designPath_plt2 = '../designMaterials/plt2/videos_toneOnsetsNIDs.csv'
 designPath2_plt2 = '../designMaterials/plt2/n_peak_boundaries.csv'
-
 paths_plt2 = [dPaths_plt2, designPath_plt2, designPath2_plt2]
 
 propTrialsThresh = 0.95
