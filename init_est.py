@@ -35,9 +35,9 @@ dPath_plt2_c1_clip2 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid3_ra
 dPath_plt2_c1_clip3 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid5_raw_17_11_03.csv']]
 
 # dummies for now
-dPath_plt2_c2_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid1_raw_17_10_26.csv']]
-dPath_plt2_c2_clip2 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid3_raw_17_11_05.csv']]
-dPath_plt2_c2_clip3 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid5_raw_17_11_03.csv']]
+dPath_plt2_c2_clip1 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid2_raw_17_11_06.csv']]
+dPath_plt2_c2_clip2 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid4_raw_17_11_06.csv']]
+dPath_plt2_c2_clip3 = ['../data/plt2/' + i for i in ['main_tonescartoons_vid6_raw_17_11_06.csv']]
 
 dPaths_plt2 = [dPath_plt2_c1_clip1, dPath_plt2_c2_clip1, 
                dPath_plt2_c1_clip2, dPath_plt2_c2_clip2, 
