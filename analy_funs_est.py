@@ -179,9 +179,9 @@ def prep_tone_timestamps(paths):
     import numpy as np
     import pandas as pd
     
-    stup = {'peak_win': 3,
-            'after_peak_rng': [3, 6],
-            'exclude_dist': 25}
+    stup = {'peak_win': 2,
+            'after_peak_rng': [2, 5],
+            'exclude_dist': 10}
     
     dfDesign = pd.read_csv(paths[1])
     dfDesign_peaks = pd.read_csv(paths[2])
