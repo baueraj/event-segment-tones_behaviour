@@ -1,6 +1,6 @@
 def get_participant_data(paths, cartoonNames, propTrialsThresh):
     '''
-    read participant data stored as single csv file
+    read participant data stored as a csv file
 
     Parameters
     ----------
@@ -48,8 +48,10 @@ def get_participant_data(paths, cartoonNames, propTrialsThresh):
             dfs_bySubj_pre = [df[(df['subject'] == i)].reset_index() for i in df['subject'].unique() \
                               if len(df[(df['subject'] == i)]) / len(dfDesign_c) >= propTrialsThresh]
 
-            dfs_bySubj = [pd.concat([df_i, pd.DataFrame({'elapTime': df_i['values.timeOfResponse'] - (df_i.loc[0,'video.video_in.timestamp'] - \
-                                                        df_i.loc[0,'block.video_play.timestamp'])})], axis=1) for df_i in dfs_bySubj_pre]
+            dfs_bySubj = [pd.concat([df_i, pd.DataFrame({'elapTime': df_i['values.timeOfResponse'] - \
+                                                         (df_i.loc[0,'video.video_in.timestamp'] - \
+                                                          df_i.loc[0,'block.video_play.timestamp'])})], axis=1) \
+                                                          for df_i in dfs_bySubj_pre]
             
             if j_c == 0:
                 dfs_bySubjAll = dfs_bySubj
@@ -64,7 +66,7 @@ def get_participant_data(paths, cartoonNames, propTrialsThresh):
 
 def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
     '''
-    detrend and reformat participant data
+    detrend and reformat participants' RT data
 
     Parameters
     ----------
@@ -130,7 +132,6 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
                     RT_i[-1] = np.nan
                         
                 if i != len(dfDesign_c)-1:
-                    #pdb.set_trace()
                     if df_subj.loc[trialInd, 'elapTime'] > dfDesign_c.iloc[i+1, 1]:
                         corrResp_i[-1] = wrngVal
                         RT_i[-1] = np.nan
@@ -304,7 +305,7 @@ def dualplot_tonesWevents(s1, s2RT, s2acc, ylims, importPaths, **kwargs):
     ax.grid(False)
     
     ax2.right_ax.set_ylim(ylims['s2RT'])
-    ax2.right_ax.set_ylabel('Reaction time to tone')
+    ax2.right_ax.set_ylabel('Reaction time to tone (ms)')
     ax2.right_ax.yaxis.label.set_size(17)
     ax2.right_ax.yaxis.label.set_color('red')
     ax2.right_ax.grid(False)

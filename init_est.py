@@ -8,7 +8,7 @@ style.use('ggplot')
 
 
 
-"""
+'''
 # pilot 1 =====================================================================
 dPath_plt1 = '../data/plt1/main_tonescartoons_raw_17_10_12.csv'
 designPath_plt1 = '../plt1/videos_toneOnsetsNIDs.csv'
@@ -21,7 +21,7 @@ vid_selector = {1: 'c1_1',
                 5: 'c1_3'}
 # 9/15 date (i.e. == 91517)
 #vid_select_mod6eq0 = 'c2_3'
-"""
+'''
 
 
 

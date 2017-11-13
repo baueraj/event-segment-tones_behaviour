@@ -1,11 +1,10 @@
-import init_est, analy_funs_est
 from init_est import *
 from analy_funs_est import *
+import init_est, analy_funs_est
 for imPath_i in importPaths:
     sys.path.append(imPath_i)
 import init_es
 #plt.close('all')
-plt.show()
 
 # other vars
 stup = {'c_inds': [1, 2]}
@@ -61,10 +60,12 @@ ylims = {'s1': [0, 7],
 kwargs = {'evbounds': dfDes_peaks_c}
 dualplot_tonesWevents(evntBound, meanRT, meanAcc, ylims, importPaths, **kwargs)
 #dualplot_tonesWevents(evntBound, abc_final_c1, meanAcc, ylims, **kwargs)
+plt.show()
 
 
-
+'''
 # event boundaries from orig dataset ==========================================
 countsEvtB = [i.sum(axis = 0) for i in init_es.allDat['aEventBounds']]
 meanCtEvtB_c1 = aCountEvtB[stup['c_inds'][0]].mean()
 meanCtEvtB_c2 = aCountEvtB[stup['c_inds'][1]].mean()
+'''

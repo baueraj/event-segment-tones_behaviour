@@ -1,6 +1,6 @@
-import init_est, analy_funs_est
 from init_est import *
 from analy_funs_est import *
+import init_est, analy_funs_est
 
 # other vars
 stup = {'c1_inds': [0, 2, 4],
@@ -54,6 +54,6 @@ df_forLMER_c2.loc[df_forLMER_c2['dist'].isnull(), :] = np.nan
 
 
 
-# save for analy_LMER.R =======================================================
+# save for analy_LMER_est.R ===================================================
 df_forLMER_c1.to_csv('./forLMER_' + cartoonNames[0].split('_')[1] + '_prepped.csv', index=False)
 df_forLMER_c2.to_csv('./forLMER_' + cartoonNames[1].split('_')[1] + '_prepped.csv', index=False)

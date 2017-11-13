@@ -29,10 +29,10 @@ summary(RT_model_c1_1)
 
 # cartoon 2
 #RT_model_c2_1 <- lmer(RT ~ dist_cent + peak + afterPeak + before1stBound + (dist_cent + peak + afterPeak + before1stBound || subj), data=df_c2)
-RT_model_c2_1 <- lmer(RT ~ dist_cent + afterPeak + (dist_cent + afterPeak || subj), data=df_c2)
-summary(RT_model_c2_1)
+#RT_model_c2_1 <- lmer(RT ~ dist_cent + afterPeak + (dist_cent + afterPeak || subj), data=df_c2)
+#summary(RT_model_c2_1)
 
 # both cartoons
 #RT_model_1 <- lmer(RT ~ dist_cent + peak + afterPeak + before1stBound + cartoon + (dist_cent + peak + afterPeak + before1stBound + cartoon || subj), data=df)
-RT_model_1 <- lmer(RT ~ dist_cent + afterPeak + (dist_cent + afterPeak || subj), data=df)
-summary(RT_model_1)
+#RT_model_1 <- lmer(RT ~ dist_cent + afterPeak + (dist_cent + afterPeak || subj), data=df)
+#summary(RT_model_1)
