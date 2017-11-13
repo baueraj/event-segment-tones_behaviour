@@ -1,4 +1,5 @@
 /__pycache__/*
+/store_del/*
 /.DS_Store
 /scratch.py
 /temp.csv
