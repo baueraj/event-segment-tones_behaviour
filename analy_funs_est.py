@@ -42,12 +42,22 @@ def get_participant_data(paths, cartoonNames, propTrialsThresh):
 
         for j_c, dPath_c in enumerate(dPathsAll_c):
             
-            df_all = pd.read_csv(dPath_c)[columns_to_retain]
+            df_all = pd.read_csv(dPath_c)[columns_to_retain]   
             df = df_all[(df_all['trialcode'] == 'write_videodata_trial')].copy()
-
+            
             dfs_bySubj_pre = [df[(df['subject'] == i)].reset_index() for i in df['subject'].unique() \
-                              if len(df[(df['subject'] == i)]) / len(dfDesign_c) >= propTrialsThresh]
-
+                               if len(df[(df['subject'] == i)]) / len(dfDesign_c) >= propTrialsThresh]
+            
+            if i_c == 0 and j_c == 0:
+                add_subj_ID = 0
+            
+            noSubj = len(dfs_bySubj_pre)
+            subj_IDs_assign = range(1+add_subj_ID, noSubj+add_subj_ID+1)
+            add_subj_ID += noSubj
+            
+            for ix, df_i in enumerate(dfs_bySubj_pre):
+                df_i['subject'].replace(to_replace=df_i.loc[0, 'subject'], value=subj_IDs_assign[ix], inplace=True)
+            
             dfs_bySubj = [pd.concat([df_i, pd.DataFrame({'elapTime': df_i['values.timeOfResponse'] - \
                                                          (df_i.loc[0,'video.video_in.timestamp'] - \
                                                           df_i.loc[0,'block.video_play.timestamp'])})], axis=1) \
@@ -66,7 +76,8 @@ def get_participant_data(paths, cartoonNames, propTrialsThresh):
 
 def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
     '''
-    detrend and reformat participants' RT data
+    prep subjs' data for detrended RT and accuracy
+    other: code for after-incorrect trial and change-response trial
 
     Parameters
     ----------
@@ -80,7 +91,8 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
     Returns
     -------
     dfs_analy_byC : dict
-        contains lists by cartoon clip of RT and acc dfs
+        contains lists by cartoon clip of RT, acc, chgResp (change response trial),
+        and aftrIncorr (after incorrect trial) dfs
 
     Notes
     -----
@@ -96,6 +108,8 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
     
     dfs_RT_byC = []
     dfs_corrResp_byC = []
+    dfs_chngResp_byC = []
+    dfs_afterIncorr_byC = []
     
     wrngVal = 0
     
@@ -108,6 +122,9 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
 
         df_RT_c = pd.DataFrame()
         df_corrResp_c = pd.DataFrame()
+        df_chngResp_c = pd.DataFrame()
+        df_afterIncorr_c = pd.DataFrame()
+        df_trialInds_c = pd.DataFrame()
         
         for i in range(len(dfDesign_c)):
             
@@ -120,24 +137,49 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
             subjs_i = []
             RT_i = []
             corrResp_i = []
+            chngResp_i = []
+            afterIncorr_i = []
+            trialInds_i = []
             
             for df_subj in dfs_c:
-            
+                
                 subjs_i.append(df_subj.loc[0, 'subject'])
                 trialInd = pd.Series.idxmin(df_subj['elapTime'].where(df_subj['elapTime'] > toneOnset))
+                trialInds_i.append(trialInd)
                 corrResp_i.append(1 if df_subj.loc[trialInd, 'values.key_pressed'] == corrKey else wrngVal)                
                 RT_i.append(df_subj.loc[trialInd, 'elapTime'] - toneOnset)
 
                 if corrResp_i[-1] == wrngVal:
                     RT_i[-1] = np.nan
                         
-                if i != len(dfDesign_c)-1:
-                    if df_subj.loc[trialInd, 'elapTime'] > dfDesign_c.iloc[i+1, 1]:
-                        corrResp_i[-1] = wrngVal
+                if i != len(dfDesign_c)-1: 
+                    if df_subj.loc[trialInd, 'elapTime'] > dfDesign_c.iloc[i+1, 1]: # timeout
+                        corrResp_i[-1] = np.nan
                         RT_i[-1] = np.nan
+                        trialInds_i[-1] = np.nan
+                
+                if trialInd > 0:
+                    if df_subj.loc[trialInd, 'values.key_pressed'] != df_subj.loc[trialInd-1, 'values.key_pressed']:
+                        chngResp_i.append(1)
+                 
+                if i > 0:
+                    # this codes an "afterIncorr" trial ONLY if NO other key press was made in between incorr and corr trials
+                    # (many subjects will make a corrective response after incorrect, before the next tone sounds)
+                    #if df_corrResp_c.loc[i-1, df_subj.loc[0, 'subject']] == wrngVal and corrResp_i[-1] == 1 \
+                    #                    and trialInd - df_trialInds_c.loc[i-1, df_subj.loc[0, 'subject']] == 1:
+                    
+                    # this cocdes an "afterIncorr" trial no matter whether additional key presses were made in between incorr and corr trials
+                    if df_corrResp_c.loc[i-1, df_subj.loc[0, 'subject']] == wrngVal and corrResp_i[-1] == 1:                        
+                        afterIncorr_i.append(1)
+                
+                chngResp_i.append(-1)
+                afterIncorr_i.append(-1)
               
             df_RT_c = df_RT_c.append(dict(zip(subjs_i, RT_i)), ignore_index=True)
             df_corrResp_c = df_corrResp_c.append(dict(zip(subjs_i, corrResp_i)), ignore_index=True)
+            df_chngResp_c = df_chngResp_c.append(dict(zip(subjs_i, chngResp_i)), ignore_index=True)
+            df_afterIncorr_c = df_afterIncorr_c.append(dict(zip(subjs_i, afterIncorr_i)), ignore_index=True)
+            df_trialInds_c = df_trialInds_c.append(dict(zip(subjs_i, trialInds_i)), ignore_index=True)
         
         # to detrend, must ignore nan values [can't just use df_RT_c.transform(lambda x: signal.detrend(x))]
         for col_i in list(df_RT_c.columns):
@@ -147,15 +189,138 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
             
         dfs_RT_byC.append(df_RT_c)
         dfs_corrResp_byC.append(df_corrResp_c)
+        dfs_chngResp_byC.append(df_chngResp_c)
+        dfs_afterIncorr_byC.append(df_afterIncorr_c)
         
     dfs_analy_byC = {'RT': dfs_RT_byC,
-                     'acc': dfs_corrResp_byC}
+                     'acc': dfs_corrResp_byC,
+                     'chngResp': dfs_chngResp_byC,
+                     'aftrIncorr': dfs_afterIncorr_byC}
                 
     return dfs_analy_byC
 
 
 
-def prep_tone_timestamps(paths):
+def prep_tone_timestamps_v2(paths, importPaths):
+    '''
+    prepare each cartoon clip's tones for LMER (distance from event boundary, etc.)
+
+    Parameters
+    ----------
+    paths : list
+        contains paths to design materials
+    importPaths : list
+        contains paths for importing other modules
+    
+    Returns
+    -------
+    dfs_tones : list
+        contains df per cartoon clip of vars of interest for LMER
+
+    Notes
+    -----
+    NA
+    '''
+    
+    import sys, pdb, warnings
+    import numpy as np
+    import pandas as pd
+    for imPath_i in importPaths:
+        sys.path.append(imPath_i)
+    import init_es
+    
+    #warnings.filterwarnings("ignore",category =RuntimeWarning)
+    
+    stup = {'after_peak_rng': [1, 4],
+            'exclude_dist': 20,
+            'thresh_peak_val': 1, # not using
+            'thresh_peak_win': 5,
+            'num_peaks': 20, # excluding t=0; np.nan means all peaks >= thresh_peak
+            'smooth_win': 5,
+            'smooth_stdev': 1,
+            'c_1_ind_es': 1,
+            'c_2_ind_es': 2}
+    
+    dfDesign = pd.read_csv(paths[1])
+    dfDesign_peaks = pd.read_csv(paths[2])
+    
+    dfs_tones = [] 
+    
+    for i_c in range(int(len(dfDesign.columns)/2)):        
+        ind_c = i_c*2 + 1
+        
+        dfDesign_c = dfDesign.iloc[:, ind_c].copy() \
+                                  .dropna(axis=0, how='any')
+        
+        cType = int(np.floor(i_c/(len(dfDesign.columns)/2))) + 1
+        cType_str = 'c_{}_ind_es'.format(str(cType))
+        
+        dist_c = []
+        peak_c = []
+        after_peak_c = []
+        before_frst_bound_c = []
+        
+        #first, handle es data
+        evntBound = init_es.plot_mov_gaussian_events(init_es.allDat['aEventBounds'][stup[cType_str]].sum(axis=1),
+                                                        stup['smooth_win'], stup['smooth_stdev'], 'b', 1, 0, 1) \
+                                                        .fillna(value=0) \
+                                                        .values
+        
+        sort_eBound = np.sort(evntBound)[::-1] # remove all 0's for efficiency
+        zeros_ix = np.where(sort_eBound == 0)        
+        sortInd_eBound = np.argsort(evntBound)[::-1].astype(float)
+        sortInd_eBound = np.delete(sortInd_eBound, zeros_ix)
+        
+        for ix, i in enumerate(sortInd_eBound):
+            if np.isnan(i):
+                continue
+            within_ix = np.where(abs(i - sortInd_eBound) <= stup['thresh_peak_win'])[0]
+            losers_ix = within_ix[np.argsort(sort_eBound[within_ix])[:-1]]
+            sortInd_eBound[losers_ix] = np.nan
+        
+        sortInd_eBound = np.insert(sortInd_eBound[~np.isnan(sortInd_eBound)].astype(int), 0, 0)
+        sortInd_eBound = pd.Series(sortInd_eBound[:stup['num_peaks']+2])
+        
+        # <---------------- add here the search for peaks i.e. inflection point behavior (past and future are smaller values)
+        
+        for j, tone_j in enumerate(dfDesign_c):
+            
+            peak_c.append(evntBound[int(tone_j/1000)]) # <-------------- double-check this is working as expected
+            
+            past_peak_ind = pd.Series.idxmax(sortInd_eBound.where(sortInd_eBound < tone_j/1000))
+            if not np.isnan(past_peak_ind):
+                past_peak = sortInd_eBound.loc[past_peak_ind]
+            else:
+                past_peak = np.nan
+            
+            future_peak_ind = pd.Series.idxmin(sortInd_eBound.where(sortInd_eBound > tone_j/1000))
+            if not np.isnan(future_peak_ind):
+                future_peak = sortInd_eBound.loc[future_peak_ind]
+            else:
+                future_peak = np.nan
+            
+            dist_c.append(tone_j/1000 - past_peak)
+            
+            if dist_c[-1] > stup['exclude_dist']: dist_c[-1] = np.nan
+                
+            if tone_j/1000 - past_peak >= stup['after_peak_rng'][0] and \
+                                          tone_j/1000 - past_peak <= stup['after_peak_rng'][1] and \
+                                          past_peak != 0:
+                after_peak_c.append(1)
+            else:
+                after_peak_c.append(-1)   
+                  
+            before_frst_bound_c.append(1 if past_peak==0 else -1)
+        
+        dfTones_c = pd.DataFrame({'dist': dist_c, 'peak': peak_c, 'afterPeak': after_peak_c, 'before1stBound': before_frst_bound_c})
+        dfTones_c.loc[dfTones_c.isnull().any(axis=1), :] = np.nan
+        dfs_tones.append(dfTones_c)
+        
+    return dfs_tones
+
+
+
+def prep_tone_timestamps_v1(paths):
     '''
     prepare each cartoon clip's tones for LMER (distance from event boundary, etc.)
 
@@ -216,6 +381,7 @@ def prep_tone_timestamps(paths):
                 future_peak = np.nan
             
             dist_c.append(tone_j/1000 - past_peak)
+            
             if dist_c[-1] > stup['exclude_dist']: dist_c[-1] = np.nan
 
             if (tone_j/1000 - past_peak <= stup['peak_win'] or \
@@ -223,16 +389,16 @@ def prep_tone_timestamps(paths):
                                           past_peak != 0:
                 peak_c.append(1)
             else:
-                peak_c.append(0)
+                peak_c.append(-1)
                 
             if tone_j/1000 - past_peak >= stup['after_peak_rng'][0] and \
                                           tone_j/1000 - past_peak <= stup['after_peak_rng'][1] and \
                                           past_peak != 0:
                 after_peak_c.append(1)
             else:
-                after_peak_c.append(0)   
+                after_peak_c.append(-1)   
                   
-            before_frst_bound_c.append(1 if past_peak==0 else 0)
+            before_frst_bound_c.append(1 if past_peak==0 else -1)
         
         dfTones_c = pd.DataFrame({'dist': dist_c, 'peak': peak_c, 'afterPeak': after_peak_c, 'before1stBound': before_frst_bound_c})
         dfTones_c.loc[dfTones_c.isnull().any(axis=1), :] = np.nan
