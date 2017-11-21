@@ -19,15 +19,19 @@ allDat_plt2 = prep_subj_data(allDat_plt2_pre, cs_withDat_plt2, paths_plt2)
 # plot tone data on top of event boundaries (just 1 clip)
 
 # setup vars: non-0-index labeling
-stup_pl = {'c': 1,
+stup_pl = {'c': 2,
            'c_clip': 1, # relative to cartoon
-           'pGrp': 1,
            'smooth_win': 2,
            'smooth_stdev': 1}
 
 dfDesign = pd.read_csv(paths_plt2[1])
 dfDesign_peaks = pd.read_csv(paths_plt2[2])
-i_c = (stup_pl['c']-1) * 3 + (stup_pl['c_clip']-1)
+
+if stup_pl['c'] == 1:
+    i_c = 2 * (stup_pl['c_clip']-1)
+else:
+    i_c  = 2 * (stup_pl['c_clip']-1) + 1
+
 inds_c = [i_c*2, i_c*2+1]
 dfDesign_c = dfDesign.iloc[:, inds_c].copy() \
                           .dropna(axis=0, how='any')
@@ -39,7 +43,7 @@ tonesTiming = dfDesign_c[des_id].copy()/1000
 tonesTiming.name = 'onset'
 
 evntBound = init_es.plot_mov_gaussian_events(init_es.allDat['aEventBounds'][stup_pl['c']].sum(axis=1),
-                                        stup_pl['smooth_win'], stup_pl['smooth_stdev'], 'b', 1, 0, 1) \
+                                        stup_pl['smooth_win'], stup_pl['smooth_stdev'], 'b', 1, 1, 1) \
                                         .fillna(value=0)
 
 meanRT_pre = allDat_plt2['RT'][i_c].mean(axis=1)

@@ -66,7 +66,7 @@ def get_participant_data(paths, cartoonNames, propTrialsThresh):
             if j_c == 0:
                 dfs_bySubjAll = dfs_bySubj
             else:
-                dfs_bySubjAll.extend(dfs_bySubj)
+                dfs_bySubjAll.extend(dfs_bySubj) # correct?
                 
         dfs_byC.append(dfs_bySubjAll)
     
@@ -234,8 +234,8 @@ def prep_tone_timestamps_v2(paths, importPaths):
     stup = {'after_peak_rng': [1, 4],
             'exclude_dist': 20,
             'thresh_peak_val': 1, # not using
-            'thresh_peak_win': 5,
-            'num_peaks': 20, # excluding t=0; np.nan means all peaks >= thresh_peak
+            'thresh_peak_win': 7,
+            'num_peaks': 15, # excluding t=0; np.nan means all peaks >= thresh_peak
             'smooth_win': 5,
             'smooth_stdev': 1,
             'c_1_ind_es': 1,
@@ -252,9 +252,12 @@ def prep_tone_timestamps_v2(paths, importPaths):
         dfDesign_c = dfDesign.iloc[:, ind_c].copy() \
                                   .dropna(axis=0, how='any')
         
-        cType = int(np.floor(i_c/(len(dfDesign.columns)/2))) + 1
+        if i_c % 2 == 0:
+            cType = 1
+        else:
+            cType = 2        
         cType_str = 'c_{}_ind_es'.format(str(cType))
-        
+
         dist_c = []
         peak_c = []
         after_peak_c = []
@@ -299,9 +302,12 @@ def prep_tone_timestamps_v2(paths, importPaths):
             else:
                 future_peak = np.nan
             
-            dist_c.append(tone_j/1000 - past_peak)
+            #dist_c.append(tone_j/1000 - past_peak)
+            dist_c.append(tone_j/1000 - (past_peak + stup['after_peak_rng'][1]))
             
-            if dist_c[-1] > stup['exclude_dist']: dist_c[-1] = np.nan
+            #if dist_c[-1] > stup['exclude_dist']: dist_c[-1] = np.nan
+            if dist_c[-1] > stup['exclude_dist'] or dist_c[-1] < 0:
+                dist_c[-1] = np.nan
                 
             if tone_j/1000 - past_peak >= stup['after_peak_rng'][0] and \
                                           tone_j/1000 - past_peak <= stup['after_peak_rng'][1] and \
@@ -357,8 +363,13 @@ def prep_tone_timestamps_v1(paths):
         
         dfDesign_c = dfDesign.iloc[:, ind_c].copy() \
                                   .dropna(axis=0, how='any')
- 
-        dfDes_peaks_c = dfDesign_peaks.iloc[:, int(np.floor(i_c/(len(dfDesign.columns)/2)))].copy() \
+        
+        if i_c % 2 == 0:
+            cType_ix = 0
+        else:
+            cType_ix = 1
+                    
+        dfDes_peaks_c = dfDesign_peaks.iloc[:, cType_ix].copy() \
                                   .dropna(axis=0, how='any')
         
         dist_c = []
@@ -529,9 +540,14 @@ def get_rt_bound_waveforms(dfs_analy_byC, paths):
     
         dfDesign_c = dfDesign.iloc[:, i_c*2 + 1].copy() \
                                   .dropna(axis=0, how='any')
-
-        dfDes_peaks_c = dfDesign_peaks.iloc[:, int(np.floor(i_c/(len(dfDesign.columns)/2)))].copy() \
-                                  .dropna(axis=0, how='any') 
+        
+        if i_c % 2 == 0:
+            cType_ix = 0
+        else:
+            cType_ix = 1
+                    
+        dfDes_peaks_c = dfDesign_peaks.iloc[:, cType_ix].copy() \
+                                  .dropna(axis=0, how='any')
 
         df = dfs_RT[i_c].copy()
         dfDesign_c.name = 'toneOnset'

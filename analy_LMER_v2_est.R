@@ -14,6 +14,7 @@ df$log_RT<-log(df$pos_RT)
 
 # center and rescale some data
 df<-ddply(df,c('subj'),transform,dist_cent=(dist-mean(dist)))
+df<-ddply(df,c('subj'),transform,peak_cent=(peak-mean(peak)))
 #df<-ddply(df,c('subj'),transform,RT_cent=scale(RT))
 #df<-ddply(df,c('itemID'),transform,ave_acc=(mean(phase2_acc)))
 
@@ -23,12 +24,12 @@ df_c2 <- subset(df, cartoon==1)
 
 # run LMER models on RT
 # cartoon 1
-RT_model_c1_1 <- lmer(RT ~ dist_cent + peak + afterPeak + before1stBound + aftrIncorr + chngResp + (dist_cent + peak + afterPeak + before1stBound + aftrIncorr + chngResp || subj), data=df_c1)
+RT_model_c1_1 <- lmer(RT ~ dist_cent + peak_cent + afterPeak + before1stBound + aftrIncorr + chngResp + (dist_cent + peak_cent + afterPeak + before1stBound + aftrIncorr + chngResp || subj), data=df_c1)
 #RT_model_c1_1 <- lmer(RT ~ dist_cent + afterPeak + (dist_cent + afterPeak || subj), data=df_c1)
 summary(RT_model_c1_1)
 
 # cartoon 2
-RT_model_c2_1 <- lmer(RT ~ dist_cent + peak + afterPeak + before1stBound + aftrIncorr + chngResp + (dist_cent + peak + afterPeak + before1stBound + aftrIncorr + chngResp || subj), data=df_c2)
+RT_model_c2_1 <- lmer(RT ~ dist_cent + peak_cent + afterPeak + before1stBound + aftrIncorr + chngResp + (dist_cent + peak_cent + afterPeak + before1stBound + aftrIncorr + chngResp || subj), data=df_c2)
 #RT_model_c2_1 <- lmer(RT ~ dist_cent + afterPeak + (dist_cent + afterPeak || subj), data=df_c2)
 summary(RT_model_c2_1)
 
