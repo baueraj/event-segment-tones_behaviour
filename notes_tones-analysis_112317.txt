@@ -1,0 +1,19 @@
+crump mturk plos one 2013
+
+-corrective trial in between
+-switch trials: >=2 consecutive identical response
+-check code: should see afterIncorr, chngResp significance
+-time elapsed since previous trial
+-detrending vs. non-detrending
+-content questions (include in model? 3 levels of understanding)
+-run another version without cartoon? compare to w/cartoon
+-measure when video ends?
+-restrict analysis (afterInorr, chngResp) to early portion of cartoon? Although might expect this psychologically anyway
+-threshold RT (2-3 std), but no detrend?
+
+
+DO FIRST:
+-detrending vs. non-detrending
+-threshold RT (2-3 std), but no detrend?
+-switch trials: >=2 consecutive identical response (make continuous? no. of trials buildup of prepotent response)
+-corrective trial in between (keep, or make into a diff variable (incorrect-aware)

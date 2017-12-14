@@ -8,11 +8,14 @@ stup = {'c1_inds': [0, 2, 4],
         #'col_names': ['RT', 'acc', 'subj', 'cartoon', 'clip',
         #              'dist', 'peak', 'afterPeak', 'b41stBound']}
 
+kwargs_prepSubjDat = {'fl_detrend': True,
+                      'RTthresh': [True, 2.5]}
+
 # pilot 2
 allDat_pre = get_participant_data(paths_plt2, cartoonNames, propTrialsThresh)
-allDat = prep_subj_data(allDat_pre, cs_withDat_plt2, paths_plt2)
+allDat = prep_subj_data(allDat_pre, cs_withDat_plt2, paths_plt2, **kwargs_prepSubjDat)
 tonesDat = prep_tone_timestamps_v2(paths_plt2, importPaths)
-
+#tonesDat_test = prep_tone_timestamps_v1(paths_plt2)
 
 
 # prep for LMER ===============================================================

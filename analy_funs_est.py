@@ -74,7 +74,7 @@ def get_participant_data(paths, cartoonNames, propTrialsThresh):
 
 
 
-def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
+def prep_subj_data(dfs_dat_byC, cs_withDat, paths, **kwargs):
     '''
     prep subjs' data for detrended RT and accuracy
     other: code for after-incorrect trial and change-response trial
@@ -87,7 +87,10 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
         specifies indices of cartoon clips that have data to prep (inds based on design file)
     paths : list
         string paths to files, folders
-    
+    kwargs
+        fl_detrend : boolean (detrend == True)
+        RTthresh : list of [boolean, float] (threshold RT == True, std for removal)
+            
     Returns
     -------
     dfs_analy_byC : dict
@@ -119,12 +122,17 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
         inds_c = [i_c*2, i_c*2 + 1]
         dfDesign_c = dfDesign.iloc[:, inds_c].copy() \
                                   .dropna(axis=0, how='any')
-
+        
         df_RT_c = pd.DataFrame()
         df_corrResp_c = pd.DataFrame()
         df_chngResp_c = pd.DataFrame()
+        
         df_afterIncorr_c = pd.DataFrame()
         df_trialInds_c = pd.DataFrame()
+        
+        subjs_c = [df_i.loc[0, 'subject'] for df_i in dfs_c]
+        df_chngRespCnt_c = pd.DataFrame(dict(zip(subjs_c, [0] * len(subjs_c))),
+                                       index=[0])
         
         for i in range(len(dfDesign_c)):
             
@@ -159,21 +167,28 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
                         trialInds_i[-1] = np.nan
                 
                 if trialInd > 0:
+                    #if df_subj.loc[trialInd, 'values.key_pressed'] != df_subj.loc[trialInd-1, 'values.key_pressed']:
                     if df_subj.loc[trialInd, 'values.key_pressed'] != df_subj.loc[trialInd-1, 'values.key_pressed']:
-                        chngResp_i.append(1)
+                        if df_chngRespCnt_c.loc[0, df_subj.loc[0, 'subject']] >= 3: # <------------ HARD-CODED
+                            chngResp_i.append(1)
+                        else:
+                            chngResp_i.append(-1)
+                        df_chngRespCnt_c.loc[0, df_subj.loc[0, 'subject']] = 1
+                    else:
+                        chngResp_i.append(-1)
+                        df_chngRespCnt_c.loc[0, df_subj.loc[0, 'subject']] += 1
                  
                 if i > 0:
-                    # this codes an "afterIncorr" trial ONLY if NO other key press was made in between incorr and corr trials
+                    # this codes an "afterIncorr" == 1 trial ONLY if NO other key press was made in between incorr and corr trials
                     # (many subjects will make a corrective response after incorrect, before the next tone sounds)
-                    #if df_corrResp_c.loc[i-1, df_subj.loc[0, 'subject']] == wrngVal and corrResp_i[-1] == 1 \
+                    # if df_corrResp_c.loc[i-1, df_subj.loc[0, 'subject']] == wrngVal and corrResp_i[-1] == 1 \
                     #                    and trialInd - df_trialInds_c.loc[i-1, df_subj.loc[0, 'subject']] == 1:
                     
                     # this cocdes an "afterIncorr" trial no matter whether additional key presses were made in between incorr and corr trials
                     if df_corrResp_c.loc[i-1, df_subj.loc[0, 'subject']] == wrngVal and corrResp_i[-1] == 1:                        
                         afterIncorr_i.append(1)
-                
-                chngResp_i.append(-1)
-                afterIncorr_i.append(-1)
+                    else:
+                        afterIncorr_i.append(-1)
               
             df_RT_c = df_RT_c.append(dict(zip(subjs_i, RT_i)), ignore_index=True)
             df_corrResp_c = df_corrResp_c.append(dict(zip(subjs_i, corrResp_i)), ignore_index=True)
@@ -181,11 +196,23 @@ def prep_subj_data(dfs_dat_byC, cs_withDat, paths):
             df_afterIncorr_c = df_afterIncorr_c.append(dict(zip(subjs_i, afterIncorr_i)), ignore_index=True)
             df_trialInds_c = df_trialInds_c.append(dict(zip(subjs_i, trialInds_i)), ignore_index=True)
         
+        # remove RT data (only CORRECT trials) with RT beyond x * std of mean
+        if kwargs['RTthresh'][0]:            
+            def get_inliers(group):
+                mean, std = group.mean(), group.std()
+                inliers = (group - mean).abs() <= kwargs['RTthresh'][1] * std
+                return inliers
+            
+            for col_i in list(df_RT_c.columns):
+                maskRT = df_RT_c[col_i][(df_corrResp_c[col_i] == 1)].transform(get_inliers)
+                df_RT_c.loc[maskRT[maskRT == False].index, col_i] = np.nan
+    
         # to detrend, must ignore nan values [can't just use df_RT_c.transform(lambda x: signal.detrend(x))]
-        for col_i in list(df_RT_c.columns):
-            col_pre = df_RT_c[col_i][df_RT_c[col_i].notnull()].copy()
-            col_detrend = signal.detrend(col_pre)
-            df_RT_c.loc[col_pre.index, col_i] = col_detrend
+        if kwargs['fl_detrend']:
+            for col_i in list(df_RT_c.columns):
+                col_pre = df_RT_c[col_i][df_RT_c[col_i].notnull()].copy()
+                col_detrend = signal.detrend(col_pre)
+                df_RT_c.loc[col_pre.index, col_i] = col_detrend
             
         dfs_RT_byC.append(df_RT_c)
         dfs_corrResp_byC.append(df_corrResp_c)
@@ -232,7 +259,7 @@ def prep_tone_timestamps_v2(paths, importPaths):
     #warnings.filterwarnings("ignore",category =RuntimeWarning)
     
     stup = {'after_peak_rng': [1, 4],
-            'exclude_dist': 20,
+            'exclude_dist': 10000, # arbitrarily large value to retain all data
             'thresh_peak_val': 1, # not using
             'thresh_peak_win': 7,
             'num_peaks': 15, # excluding t=0; np.nan means all peaks >= thresh_peak
@@ -284,7 +311,7 @@ def prep_tone_timestamps_v2(paths, importPaths):
         sortInd_eBound = np.insert(sortInd_eBound[~np.isnan(sortInd_eBound)].astype(int), 0, 0)
         sortInd_eBound = pd.Series(sortInd_eBound[:stup['num_peaks']+2])
         
-        # <---------------- add here the search for peaks i.e. inflection point behavior (past and future are smaller values)
+        # <---------------- to improve: add here the search for peaks i.e. inflection point behavior (past and future are smaller values)
         
         for j, tone_j in enumerate(dfDesign_c):
             
